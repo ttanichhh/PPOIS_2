@@ -1,9 +1,10 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from Lab1.entities.doctor import Doctor
 from Lab1.entities.patient import Patient
 from Lab1.entities.medical import Symptom, Medication, Recommendation, MedicalHistory
 from Lab1.exceptions import NotFoundError
 from Lab1.assistant.storage import DataStorage
+
 
 
 class MedicalAssistant:
@@ -19,16 +20,17 @@ class MedicalAssistant:
         self._doctors_by_id: Dict[int, Doctor] = {d.id: d for d in doctors}
         self._clinics: List[Dict] = clinics
 
-        # Группируем клиники по районам
+        # Группируем клиники по районам (нормализуем ключи)
         self._clinics_by_area: Dict[str, List[Dict]] = {}
         for clinic in clinics:
-            area = clinic.get("area")
-            if area not in self._clinics_by_area:
-                self._clinics_by_area[area] = []
-            self._clinics_by_area[area].append(clinic)
+            area_raw = clinic.get("area", "")
+            area = area_raw.strip().lower()
+            if not area:
+                continue
+            self._clinics_by_area.setdefault(area, []).append(clinic)
 
         # Данные о симптомах
-        self._symptom_advice = symptom_data.get("advice_map", {})
+        self._symptom_advice = symptom_data.get("symptom_map", {})
 
     @property
     def name(self) -> str:
@@ -87,17 +89,20 @@ class MedicalAssistant:
         user = self._get_user_safe(user_id)
         return user.medical_history.medications
 
-    # Операция поиска клиник по району
     def find_clinics_by_area(self, area: str) -> List[Dict]:
         """Поиск клиник по району"""
-        return self._clinics_by_area.get(area.lower(), [])
+        key = (area or "").strip().lower()
+        return [
+            c for c in self._clinics
+            if (c.get("area") or "").strip().lower() == key
+        ]
 
     # Операция консультации с врачом
     def consult_doctor(self, doctor_id: int, user_id: int, question: str) -> str:
         doctor = self._get_doctor_safe(doctor_id)
         user = self._get_user_safe(user_id)
 
-        # Ищем клинику по НАЗВАНИЮ
+        # Ищем клинику
         clinic = None
         for c in self._clinics:
             if c.get("name") == doctor.clinic:
@@ -130,4 +135,31 @@ class MedicalAssistant:
         raise NotFoundError(f"Доктор с ID {doctor_id} не найден")
 
     def get_all_areas(self) -> List[str]:
-        return list(self._clinics_by_area.keys())
+        areas = {
+            (c.get("area") or "").strip().lower()
+            for c in self._clinics
+            if (c.get("area") or "").strip()
+        }
+        return sorted(areas)
+
+    def get_doctors_by_area(self, area: str) -> List[Doctor]:
+        clinics = self.find_clinics_by_area(area)
+        ids = []
+        for c in clinics:
+            ids.extend(c.get("doctor_ids", []))
+
+        unique_ids = sorted(set(ids))
+        return [self._doctors_by_id[i] for i in unique_ids if i in self._doctors_by_id]
+
+    def get_clinics_and_doctors_by_area(self, area: str) -> List[Tuple[Dict, List[Doctor]]]:
+        """
+        Возвращает пары (clinic_dict, doctors_list) для выбранного района,
+        чтобы удобно печатать меню записи.
+        """
+        clinics = self.find_clinics_by_area(area)
+        result: List[Tuple[Dict, List[Doctor]]] = []
+        for clinic in clinics:
+            cname = clinic.get("name")
+            doctors_in_clinic = [d for d in self._doctors if d.clinic == cname]
+            result.append((clinic, doctors_in_clinic))
+        return result

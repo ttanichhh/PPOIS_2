@@ -64,25 +64,33 @@ class DataStorage:
             json.dump(full_data, f, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def load_data(filename: str) -> Tuple[List[Patient], List[Doctor], List[Dict], Dict]:  # ИЗМЕНЕНО
+    def load_data(filename: str) -> Tuple[List[Patient], List[Doctor], List[Dict], Dict]:
         if not os.path.exists(filename):
-            return [], [], [], {"symptom_map": {}, "advice_map": {}, "symptom_list": []}  # ИЗМЕНЕНО
+            return [], [], [], {"symptom_map": {}, "advice_map": {}, "symptom_list": []}
 
         with open(filename, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
         # Загружаем клиники как словари
         clinics = data.get("clinics", [])
+        clinic_name_by_id = {
+            c["id"]: c["name"]
+            for c in clinics
+            if "id" in c and "name" in c
+        }
 
         # Загружаем врачей
         doctors = []
         for d in data.get("doctors", []):
+            clinic_id = d.get("clinic_id")
+            clinic_name = clinic_name_by_id.get(clinic_id, f"Клиника #{clinic_id}")
+
             doctor = Doctor(
                 d["id"],
                 d["name"],
                 d["phone"],
                 d["specialization"],
-                d["clinic_id"]
+                clinic_name  # <-- теперь doctor.clinic = ИМЯ клиники
             )
             doctors.append(doctor)
 

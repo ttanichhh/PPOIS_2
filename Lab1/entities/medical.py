@@ -69,7 +69,7 @@ class Recommendation:
         if date:
             self._date: str = date
         else:
-            self._date: str = datetime.now().strftime("%Г-%М-%Д")
+            self._date: str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     @property
     def text(self) -> str:

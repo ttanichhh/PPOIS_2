@@ -7,3 +7,5 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+clients.sqlite3
+*.sqlite3

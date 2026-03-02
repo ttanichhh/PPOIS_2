@@ -795,6 +795,5 @@ class TestEdgeCases:
         assert patient.name == special_chars
         assert patient.phone == special_chars
 
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--cov=.", "--cov-report=term", "--cov-report=html"])

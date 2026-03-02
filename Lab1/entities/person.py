@@ -6,6 +6,9 @@ class Person:
         self._name: str = name
         self._phone: str = phone
 
+    # @property - это декоратор, который позволяет определять методы
+    # которые можно использовать как атрибуты
+    # Это реализация принципа инкапсуляции в ООП
     @property
     def id(self) -> int:
         return self._id
