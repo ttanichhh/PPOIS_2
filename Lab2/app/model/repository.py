@@ -113,11 +113,24 @@ class ClientRepository:
         return records, int(total)
 
     # ---------- Delete ----------
-    def delete_by_criteria(self, criteria: SearchCriteria) -> int:
+    def delete_by_criteria(self, criteria: SearchCriteria):
         where_sql, params = self._build_where(criteria)
+
         with self._connect() as conn:
-            cur = conn.execute(f"DELETE FROM clients {where_sql}", params)
-            return int(cur.rowcount)
+            rows = conn.execute(
+                f"""
+                SELECT fio, account_number, registration_address, mobile_phone, home_phone
+                FROM clients
+                {where_sql}
+                """,
+                params
+            ).fetchall()
+
+            records = [ClientRecord(**dict(row)) for row in rows]
+
+            conn.execute(f"DELETE FROM clients {where_sql}", params)
+
+        return records
 
     # ---------- WHERE builder ----------
     @staticmethod

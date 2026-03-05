@@ -153,11 +153,20 @@ class MainController:
             if err:
                 self.view.show_error(err, "Ошибка условий удаления")
                 return
-            deleted = self.repo.delete_by_criteria(dlg.get_criteria())
-            if deleted > 0:
-                self.view.show_info(f"Удалено записей: {deleted}")
+
+            deleted_records = self.repo.delete_by_criteria(dlg.get_criteria())
+
+            if deleted_records:
+                text = "Удалены записи:\n\n"
+                for r in deleted_records[:10]:
+                    text += f"{r.fio} | {r.account_number}\n"
+                if len(deleted_records) > 10:
+                    text += f"\n... и ещё {len(deleted_records) - 10}"
+
+                self.view.show_info(text)
             else:
                 self.view.show_info("Записей по заданным условиям не найдено.")
+
             self.reload_page()
 
         dlg.btn_delete.clicked.connect(do_delete)
