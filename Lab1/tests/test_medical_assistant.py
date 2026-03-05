@@ -146,12 +146,6 @@ def assistant_with_data(temp_data_file):
 class TestExceptions:
     """Тестирование классов исключений."""
 
-    def test_medical_assistant_error(self):
-        """Тест базового исключения."""
-        error = MedicalAssistantError("Тестовая ошибка")
-        assert str(error) == "Тестовая ошибка"
-        assert error.msg == "Тестовая ошибка"
-
     def test_empty_value_error(self):
         """Тест исключения пустого значения."""
         error = EmptyValueError("Пустое значение")

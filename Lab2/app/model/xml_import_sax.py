@@ -16,9 +16,7 @@ class _ClientsHandler(ContentHandler):
     def startElement(self, name, attrs):
         if name == "client":
             self._current = {
-                "last_name": "",
-                "first_name": "",
-                "middle_name": "",
+                "fio": "",
                 "account_number": "",
                 "registration_address": "",
                 "mobile_phone": "",

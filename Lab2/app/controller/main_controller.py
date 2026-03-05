@@ -1,6 +1,5 @@
 import math
-from PySide6.QtWidgets import QFileDialog
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QFileDialog, QDialog
 
 from Lab2.app.view.main_window import MainWindow
 from Lab2.app.view.dialogs.add_edit_dialog import AddEditDialog
@@ -21,7 +20,6 @@ class MainController:
         self.page_size = 10
         self.total_records = 0
 
-        # Wire actions
         v = self.view
         v.act_exit.triggered.connect(v.close)
         v.act_about.triggered.connect(lambda: v.show_info(
@@ -37,14 +35,12 @@ class MainController:
         v.act_save.triggered.connect(self.on_export_xml)
         v.act_open.triggered.connect(self.on_import_xml)
 
-        # Pagination
         v.pagination.first_clicked.connect(self.on_first)
         v.pagination.prev_clicked.connect(self.on_prev)
         v.pagination.next_clicked.connect(self.on_next)
         v.pagination.last_clicked.connect(self.on_last)
         v.pagination.page_size_changed.connect(self.on_page_size_changed)
 
-        # Initial load
         self.reload_page()
 
     def show(self):
@@ -92,7 +88,6 @@ class MainController:
     def on_add(self):
         dlg = AddEditDialog(self.view)
         result = dlg.exec()
-
         if result == QDialog.DialogCode.Accepted:
             err = dlg.validate()
             if err:
@@ -103,8 +98,6 @@ class MainController:
 
     def on_search(self):
         dlg = SearchDialog(self.view)
-
-        # local pagination state for search dialog
         state = {"page_index": 0, "page_size": int(dlg.pagination.page_size.currentText()), "total": 0}
 
         def load_search():
@@ -114,7 +107,6 @@ class MainController:
                 return
 
             criteria = dlg.get_criteria()
-            # clamp
             if state["page_size"] <= 0:
                 state["page_size"] = 10
             if state["page_index"] < 0:
@@ -123,7 +115,6 @@ class MainController:
             rows, total = self.repo.search_page(criteria, state["page_index"], state["page_size"])
             state["total"] = total
 
-            # compute pages
             total_pages = max(1, math.ceil(total / state["page_size"])) if total > 0 else 1
             state["page_index"] = max(0, min(state["page_index"], total_pages - 1))
 
@@ -136,13 +127,21 @@ class MainController:
             return max(1, math.ceil(state["total"] / state["page_size"]))
 
         dlg.btn_find.clicked.connect(lambda: (state.__setitem__("page_index", 0), load_search()))
-        dlg.btn_clear.clicked.connect(lambda: (state.__setitem__("page_index", 0), dlg.table_model.set_rows([]), dlg.pagination.set_info(1, 1, 0)))
+        dlg.btn_clear.clicked.connect(lambda: (
+            state.__setitem__("page_index", 0),
+            dlg.table_model.set_rows([]),
+            dlg.pagination.set_info(1, 1, 0)
+        ))
 
         dlg.pagination.first_clicked.connect(lambda: (state.__setitem__("page_index", 0), load_search()))
         dlg.pagination.prev_clicked.connect(lambda: (state.__setitem__("page_index", state["page_index"] - 1), load_search()))
         dlg.pagination.next_clicked.connect(lambda: (state.__setitem__("page_index", state["page_index"] + 1), load_search()))
         dlg.pagination.last_clicked.connect(lambda: (state.__setitem__("page_index", tp() - 1), load_search()))
-        dlg.pagination.page_size_changed.connect(lambda n: (state.__setitem__("page_size", int(n)), state.__setitem__("page_index", 0), load_search()))
+        dlg.pagination.page_size_changed.connect(lambda n: (
+            state.__setitem__("page_size", int(n)),
+            state.__setitem__("page_index", 0),
+            load_search()
+        ))
 
         dlg.exec()
 
@@ -165,7 +164,6 @@ class MainController:
         dlg.exec()
 
     def on_new_clear_db(self):
-        # простое "Новый": очищаем БД
         self.repo.clear_all()
         self.page_index = 0
         self.reload_page()
@@ -181,8 +179,6 @@ class MainController:
         if not file_path:
             return
 
-        # export all records (без пагинации)
-        # читаем из БД всё
         all_records = []
         idx = 0
         page_size = 500

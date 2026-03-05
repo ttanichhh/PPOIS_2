@@ -1,11 +1,17 @@
 import sqlite3
-from typing import List, Tuple
 from pathlib import Path
+from typing import List, Tuple
 
 from Lab2.app.model.entities import ClientRecord
 from Lab2.app.model.search import SearchCriteria, CriteriaMode
 
+
 class ClientRepository:
+    """
+    SQLite repository.
+    DB is stored inside Lab2/clients.sqlite3 (absolute path),
+    so data is saved regardless of where you run the app from.
+    """
     def __init__(self, db_path: str | None = None):
         if db_path is None:
             base_dir = Path(__file__).resolve().parents[2]  # .../PPOIS_2/Lab2
@@ -23,29 +29,27 @@ class ClientRepository:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS clients (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    last_name TEXT NOT NULL,
-                    first_name TEXT NOT NULL,
-                    middle_name TEXT NOT NULL,
+                    fio TEXT NOT NULL,
                     account_number TEXT NOT NULL,
                     registration_address TEXT NOT NULL,
                     mobile_phone TEXT NOT NULL,
                     home_phone TEXT NOT NULL
                 );
             """)
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_last_name ON clients(last_name);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_fio ON clients(fio);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_account ON clients(account_number);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_mobile ON clients(mobile_phone);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_home ON clients(home_phone);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_address ON clients(registration_address);")
 
     # ---------- CRUD ----------
     def add(self, r: ClientRecord) -> None:
         with self._connect() as conn:
             conn.execute(
                 """INSERT INTO clients
-                   (last_name, first_name, middle_name, account_number, registration_address, mobile_phone, home_phone)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (r.last_name, r.first_name, r.middle_name, r.account_number,
-                 r.registration_address, r.mobile_phone, r.home_phone)
+                   (fio, account_number, registration_address, mobile_phone, home_phone)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (r.fio, r.account_number, r.registration_address, r.mobile_phone, r.home_phone)
             )
 
     def add_many(self, records: List[ClientRecord]) -> None:
@@ -54,10 +58,9 @@ class ClientRepository:
         with self._connect() as conn:
             conn.executemany(
                 """INSERT INTO clients
-                   (last_name, first_name, middle_name, account_number, registration_address, mobile_phone, home_phone)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                [(r.last_name, r.first_name, r.middle_name, r.account_number,
-                  r.registration_address, r.mobile_phone, r.home_phone) for r in records]
+                   (fio, account_number, registration_address, mobile_phone, home_phone)
+                   VALUES (?, ?, ?, ?, ?)""",
+                [(r.fio, r.account_number, r.registration_address, r.mobile_phone, r.home_phone) for r in records]
             )
 
     def clear_all(self) -> None:
@@ -73,9 +76,9 @@ class ClientRepository:
         with self._connect() as conn:
             total = conn.execute("SELECT COUNT(*) AS c FROM clients").fetchone()["c"]
             rows = conn.execute(
-                """SELECT last_name, first_name, middle_name, account_number, registration_address, mobile_phone, home_phone
+                """SELECT fio, account_number, registration_address, mobile_phone, home_phone
                    FROM clients
-                   ORDER BY last_name, first_name, middle_name, account_number
+                   ORDER BY fio, account_number
                    LIMIT ? OFFSET ?""",
                 (page_size, offset)
             ).fetchall()
@@ -86,12 +89,13 @@ class ClientRepository:
     # ---------- Search paging ----------
     def search_page(self, criteria: SearchCriteria, page_index: int, page_size: int) -> Tuple[List[ClientRecord], int]:
         where_sql, params = self._build_where(criteria)
+
         page_index = max(page_index, 0)
         page_size = max(page_size, 1)
         offset = page_index * page_size
 
         base_select = """
-            SELECT last_name, first_name, middle_name, account_number, registration_address, mobile_phone, home_phone
+            SELECT fio, account_number, registration_address, mobile_phone, home_phone
             FROM clients
         """
         base_count = "SELECT COUNT(*) AS c FROM clients"
@@ -100,7 +104,7 @@ class ClientRepository:
             total = conn.execute(f"{base_count} {where_sql}", params).fetchone()["c"]
             rows = conn.execute(
                 f"""{base_select} {where_sql}
-                    ORDER BY last_name, first_name, middle_name, account_number
+                    ORDER BY fio, account_number
                     LIMIT ? OFFSET ?""",
                 (*params, page_size, offset)
             ).fetchall()
@@ -116,86 +120,93 @@ class ClientRepository:
             return int(cur.rowcount)
 
     # ---------- WHERE builder ----------
+    @staticmethod
+    def _norm_phone(s: str) -> str:
+        return "".join(ch for ch in (s or "") if ch.isdigit())
+
+    @staticmethod
+    def _digits_expr(col: str) -> str:
+        return (
+            f"REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE({col}, '+', ''), '(', ''), ')', ''), '-', ''), ' ', ''), '.', '')"
+        )
 
     def _build_where(self, c: SearchCriteria) -> Tuple[str, tuple]:
-        # IMPORTANT: условия по ТЗ "или" / "и" реализуем так, как описано в UI.
-        # Mode 1: по номеру телефона ИЛИ фамилии (если заполнены оба — удаляем/ищем по (phone OR lastname))
+        # Mode 1: mobile OR last name
         if c.mode == CriteriaMode.PHONE_OR_LASTNAME:
             phone = (c.phone or "").strip()
             last = (c.last_name or "").strip()
 
             clauses = []
-            params = []
+            params: list = []
 
+            # телефон
             if phone:
-                clauses.append("(mobile_phone LIKE ? OR home_phone LIKE ?)")
-                like = f"%{phone}%"
-                params.extend([like, like])
+                p = self._norm_phone(phone)
+                if not p:
+                    return "WHERE 1=0", ()
+                mob = self._digits_expr("mobile_phone")
+                clauses.append(f"({mob} = ?)")
+                params.append(p)
 
+            # фамилия: точное совпадение, берём 1-е слово из fio
             if last:
-                clauses.append("(last_name LIKE ?)")
-                params.append(f"%{last}%")
+                last_sql = (
+                    "LOWER(TRIM(SUBSTR(fio, 1, "
+                    "CASE WHEN INSTR(fio, ' ') = 0 THEN LENGTH(fio) ELSE INSTR(fio, ' ') - 1 END"
+                    ")))"
+                )
+                clauses.append(f"({last_sql} = LOWER(?))")
+                params.append(last)
 
             if not clauses:
-                # пустые условия -> ничего не находим/не удаляем
                 return "WHERE 1=0", ()
 
-            # "ИЛИ" между заполненными условиями:
+            # ВАЖНО: OR между телефоном и фамилией
             return "WHERE (" + " OR ".join(clauses) + ")", tuple(params)
 
-        # Mode 2: по номеру счета ИЛИ адресу
+        # Mode 2: account OR address (exact)
         if c.mode == CriteriaMode.ACCOUNT_OR_ADDRESS:
             acc = (c.account_number or "").strip()
             addr = (c.address_part or "").strip()
 
             clauses = []
-            params = []
+            params: list = []
 
+            # СЧЁТ: по части (LIKE)
             if acc:
                 clauses.append("(account_number LIKE ?)")
                 params.append(f"%{acc}%")
 
+            # АДРЕС: по части, без учета регистра
             if addr:
-                clauses.append("(registration_address LIKE ?)")
+                clauses.append("(LOWER(registration_address) LIKE LOWER(?))")
                 params.append(f"%{addr}%")
 
             if not clauses:
                 return "WHERE 1=0", ()
 
+            # ИЛИ между заполненными условиями:
             return "WHERE (" + " OR ".join(clauses) + ")", tuple(params)
 
-        # Mode 3: по ФИО и цифрам в одном из номеров
+        # Mode 3: fio AND (mobile OR home) exact phone
         if c.mode == CriteriaMode.FIO_AND_DIGITS_IN_PHONE:
-            fio_clauses = []
-            params = []
+            fio = (c.fio_text or "").strip()
+            phone = (c.phone_exact or "").strip()
 
-            ln = (c.fio_last or "").strip()
-            fn = (c.fio_first or "").strip()
-            mn = (c.fio_middle or "").strip()
-            digits = (c.digits or "").strip()
-
-            if ln:
-                fio_clauses.append("(last_name LIKE ?)")
-                params.append(f"%{ln}%")
-            if fn:
-                fio_clauses.append("(first_name LIKE ?)")
-                params.append(f"%{fn}%")
-            if mn:
-                fio_clauses.append("(middle_name LIKE ?)")
-                params.append(f"%{mn}%")
-
-            # ФИО может быть частичным, но хотя бы что-то должно быть заполнено:
-            if not fio_clauses:
+            if not fio or not phone:
                 return "WHERE 1=0", ()
 
-            if not digits:
+            p = self._norm_phone(phone)
+            if not p:
                 return "WHERE 1=0", ()
 
-            # Условие: (любой из заполненных элементов ФИО совпал) AND (digits в одном из номеров)
-            fio_sql = "(" + " OR ".join(fio_clauses) + ")"
-            phone_sql = "(mobile_phone LIKE ? OR home_phone LIKE ?)"
-            like_digits = f"%{digits}%"
-            params.extend([like_digits, like_digits])
+            fio_sql = "(LOWER(fio) LIKE LOWER(?))"
+            params: list = [f"%{fio}%"]
+
+            mob = self._digits_expr("mobile_phone")
+            home = self._digits_expr("home_phone")
+            phone_sql = f"({mob} = ? OR {home} = ?)"
+            params.extend([p, p])
 
             return f"WHERE {fio_sql} AND {phone_sql}", tuple(params)
 

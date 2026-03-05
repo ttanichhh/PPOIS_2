@@ -3,9 +3,9 @@ from enum import Enum
 
 
 class CriteriaMode(Enum):
-    PHONE_OR_LASTNAME = "Телефон или фамилия"
+    PHONE_OR_LASTNAME = "Мобильный или фамилия"
     ACCOUNT_OR_ADDRESS = "Счет или адрес"
-    FIO_AND_DIGITS_IN_PHONE = "ФИО и цифры в одном из номеров"
+    FIO_AND_DIGITS_IN_PHONE = "ФИО и телефон"
 
 
 @dataclass(frozen=True)
@@ -13,15 +13,13 @@ class SearchCriteria:
     mode: CriteriaMode
 
     # Mode 1:
-    last_name: str = ""
-    phone: str = ""  # искать в mobile/home
+    last_name: str = ""  # part of fio
+    phone: str = ""      # mobile only, exact match
 
     # Mode 2:
-    account_number: str = ""
-    address_part: str = ""
+    account_number: str = ""  # exact match
+    address_part: str = ""    # exact match
 
     # Mode 3:
-    fio_last: str = ""
-    fio_first: str = ""
-    fio_middle: str = ""
-    digits: str = ""  # подстрока цифр, например "23"
+    fio_text: str = ""        # partial match
+    phone_exact: str = ""     # exact match, checks mobile OR home

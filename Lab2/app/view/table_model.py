@@ -37,7 +37,7 @@ class ClientsTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             col = index.column()
             if col == 0:
-                return r.fio_compact()
+                return r.fio
             if col == 1:
                 return r.account_number
             if col == 2:
