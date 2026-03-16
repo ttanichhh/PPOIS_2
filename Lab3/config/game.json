@@ -1,0 +1,27 @@
+{
+  "window": {
+    "width": 900,
+    "height": 700,
+    "title": "Arkanoid"
+  },
+  "colors": {
+    "background": [16, 18, 34],
+    "paddle": [164, 53, 68],
+    "ball": [255, 245, 245],
+    "text": [255, 245, 245]
+  },
+  "paddle": {
+    "width": 130,
+    "height": 18,
+    "speed": 10
+  },
+  "ball": {
+    "radius": 10,
+    "speed_x": 5,
+    "speed_y": -5
+  },
+  "gameplay": {
+    "lives": 3,
+    "fps": 60
+  }
+}
