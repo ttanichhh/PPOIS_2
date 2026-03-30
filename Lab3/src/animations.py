@@ -32,6 +32,7 @@ class ParticleSystem:
     def __init__(self) -> None:
         self.particles: list[Particle] = []
 
+    # создание частиц разрушения
     def spawn_brick_destroy(self, rect: pygame.Rect, color: tuple[int, int, int]) -> None:
         for _ in range(16):
             self.particles.append(
@@ -46,6 +47,7 @@ class ParticleSystem:
                 )
             )
 
+    #разлетаются частицы когда мяч теряется
     def spawn_ball_lost(self, x: float, y: float) -> None:
         for _ in range(20):
             self.particles.append(

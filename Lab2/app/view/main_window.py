@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QTableView,
-    QMessageBox, QHeaderView
+    QMessageBox
 )
 from PySide6.QtGui import QAction
 
@@ -90,7 +90,6 @@ class MainWindow(QMainWindow):
 
         self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableView.SelectionMode.SingleSelection)
-
 
 
     def show_error(self, text: str, title: str = "Ошибка"):

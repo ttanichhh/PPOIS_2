@@ -65,8 +65,6 @@ class ArkanoidGame:
         self.create_entities()
         self.load_level(self.current_level)
 
-
-
     def load_background(self) -> pygame.Surface | None:
         path = self.base_dir / 'assets' / 'images' / 'background.png'
         if path.exists():
@@ -197,6 +195,7 @@ class ArkanoidGame:
                 overlap_right = brick.rect.right - self.ball.rect.left
                 overlap_top = self.ball.rect.bottom - brick.rect.top
                 overlap_bottom = brick.rect.bottom - self.ball.rect.top
+                #вызывает систему частиц spawn_brick_destroy()
                 min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
 
                 destroyed = brick.hit()
@@ -289,10 +288,11 @@ class ArkanoidGame:
     def draw_menu(self) -> None:
         self.draw_background()
         self.text.center('ARKANOID', 140, big=True)
-        self.text.center(f'Выбран уровень: {self.selected_level + 1} (клавиши 1-5)', 200, small=True)
+        self.text.center(f'Выбран уровень: {self.selected_level + 1}', 200, small=True)
+        self.text.center('1-5 — уровни 1-5, Q/W/E/R/T — уровни 6-10', 230, small=True)
         for index, item in enumerate(self.menu_items):
             prefix = '▶ ' if index == self.menu_index else '  '
-            self.text.center(prefix + item, 290 + index * 56)
+            self.text.center(prefix + item, 320 + index * 56)
         self.text.center('Управление в игре: ← → или A / D', 610, small=True)
 
     def draw_help(self) -> None:
@@ -355,17 +355,28 @@ class ArkanoidGame:
         if event.key in (pygame.K_1, pygame.K_KP1):
             self.selected_level = 0
         elif event.key in (pygame.K_2, pygame.K_KP2):
-            if len(self.level_data['levels']) >= 2:
-                self.selected_level = 1
+            self.selected_level = 1
         elif event.key in (pygame.K_3, pygame.K_KP3):
-            if len(self.level_data['levels']) >= 3:
-                self.selected_level = 2
+            self.selected_level = 2
         elif event.key in (pygame.K_4, pygame.K_KP4):
-            if len(self.level_data['levels']) >= 4:
-                self.selected_level = 3
+            self.selected_level = 3
         elif event.key in (pygame.K_5, pygame.K_KP5):
-            if len(self.level_data['levels']) >= 5:
-                self.selected_level = 4
+            self.selected_level = 4
+        elif event.key == pygame.K_q:
+            if len(self.level_data['levels']) >= 6:
+                self.selected_level = 5
+        elif event.key == pygame.K_w:
+            if len(self.level_data['levels']) >= 7:
+                self.selected_level = 6
+        elif event.key == pygame.K_e:
+            if len(self.level_data['levels']) >= 8:
+                self.selected_level = 7
+        elif event.key == pygame.K_r:
+            if len(self.level_data['levels']) >= 9:
+                self.selected_level = 8
+        elif event.key == pygame.K_t:
+            if len(self.level_data['levels']) >= 10:
+                self.selected_level = 9
 
         if event.key == pygame.K_UP:
             self.menu_index = (self.menu_index - 1) % len(self.menu_items)
@@ -381,8 +392,11 @@ class ArkanoidGame:
             elif self.menu_index == 3:
                 self.running = False
 
+    # ПРИМЕР_2
     def handle_events(self) -> None:
+
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 self.running = False
 
@@ -395,6 +409,7 @@ class ArkanoidGame:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     self.state = MENU
             elif self.state == GAME_OVER:
+                #обработка нажатия клавиши
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                     self.state = MENU
             elif self.state == NEW_RECORD:

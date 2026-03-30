@@ -42,7 +42,6 @@ class ClientRepository:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_home ON clients(home_phone);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_clients_address ON clients(registration_address);")
 
-    # ---------- CRUD ----------
     def add(self, r: ClientRecord) -> None:
         with self._connect() as conn:
             conn.execute(
