@@ -6,7 +6,7 @@ from assistant.storage import DataStorage
 
 
 class MedicalAssistantApp:
-    """Shared application service for both CLI and GUI."""
+    """Shared application service for both CLI and web interfaces."""
 
     def __init__(self, data_file: str) -> None:
         self.data_file = data_file

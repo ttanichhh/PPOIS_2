@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Персональный медицинский ассистент</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Flask Web App</p>
+                <h1>Персональный медицинский ассистент</h1>
+                <p class="hero-text">
+                    Веб-интерфейс для регистрации пациентов, ведения медицинской истории,
+                    поиска клиник и консультаций с врачами.
+                </p>
+            </div>
+            <form method="post" action="{{ url_for('save') }}" class="save-form">
+                <input type="hidden" name="user_id" value="{{ selected_user_id if selected_user_id is not none else '' }}">
+                <input type="hidden" name="area" value="{{ selected_area or '' }}">
+                <button type="submit" class="secondary-button">Сохранить данные</button>
+            </form>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="messages">
+                    {% for category, message in messages %}
+                        <div class="message message-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <span>Пользователи</span>
+                <strong>{{ users|length }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Врачи</span>
+                <strong>{{ status.doctors|length }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Районы</span>
+                <strong>{{ areas|length }}</strong>
+            </article>
+            <article class="stat-card">
+                <span>Ассистент</span>
+                <strong>{{ status.assistant_name }}</strong>
+            </article>
+        </section>
+
+        <main class="content-grid">
+            <section class="panel">
+                <h2>Регистрация пользователя</h2>
+                <form method="post" action="{{ url_for('register_user') }}" class="stack-form">
+                    <label>
+                        <span>Имя</span>
+                        <input type="text" name="name" required>
+                    </label>
+                    <label>
+                        <span>Телефон</span>
+                        <input type="text" name="phone" required>
+                    </label>
+                    <label>
+                        <span>Возраст</span>
+                        <input type="number" name="age" min="1" required>
+                    </label>
+                    <button type="submit">Зарегистрировать</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>Пользователи</h2>
+                <div class="user-list">
+                    {% for user in users %}
+                        <a
+                            class="user-card {% if user.id == selected_user_id %}active{% endif %}"
+                            href="{{ url_for('index', user_id=user.id, area=selected_area) }}"
+                        >
+                            <strong>{{ user.name }}</strong>
+                            <span>ID: {{ user.id }} | {{ user.age }} лет</span>
+                            <span>{{ user.phone }}</span>
+                            <span>
+                                Симптомы: {{ user.symptoms_count }},
+                                лекарства: {{ user.medications_count }},
+                                рекомендации: {{ user.recommendations_count }}
+                            </span>
+                        </a>
+                    {% else %}
+                        <p class="empty-state">Пока нет зарегистрированных пользователей.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Медицинская история</h2>
+                {% if history %}
+                    <div class="history-block">
+                        <h3>{{ history.user.name }}</h3>
+                        <p>{{ history.user.phone }} | {{ history.user.age }} лет</p>
+                    </div>
+                    <div class="history-columns">
+                        <div>
+                            <h3>Симптомы</h3>
+                            <ul>
+                                {% for symptom in history.symptoms %}
+                                    <li>{{ symptom }}</li>
+                                {% else %}
+                                    <li>Симптомы не записаны.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <h3>Рекомендации</h3>
+                            <ul>
+                                {% for recommendation in history.recommendations %}
+                                    <li>{{ recommendation }}</li>
+                                {% else %}
+                                    <li>Рекомендации отсутствуют.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="empty-state">Выберите пользователя, чтобы увидеть медицинскую историю.</p>
+                {% endif %}
+            </section>
+
+            <section class="panel">
+                <h2>Симптомы и советы</h2>
+                <form method="post" action="{{ url_for('record_symptom') }}" class="stack-form">
+                    <label>
+                        <span>Пациент</span>
+                        <select name="user_id" required>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                                    {{ user.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Симптом</span>
+                        <input type="text" name="symptom" required>
+                    </label>
+                    <label>
+                        <span>Тяжесть (1-10)</span>
+                        <input type="number" name="severity" min="1" max="10" value="5" required>
+                    </label>
+                    <button type="submit">Записать симптом</button>
+                </form>
+
+                <form method="post" action="{{ url_for('give_advice') }}" class="stack-form inset-form">
+                    <label>
+                        <span>Пациент</span>
+                        <select name="user_id" required>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                                    {{ user.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Симптом</span>
+                        <input type="text" name="symptom" required>
+                    </label>
+                    <button type="submit" class="secondary-button">Получить совет</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>Лекарства</h2>
+                <form method="post" action="{{ url_for('add_medication') }}" class="stack-form">
+                    <label>
+                        <span>Пациент</span>
+                        <select name="user_id" required>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                                    {{ user.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Название</span>
+                        <input type="text" name="name" required>
+                    </label>
+                    <label>
+                        <span>Дозировка</span>
+                        <input type="text" name="dosage" required>
+                    </label>
+                    <label>
+                        <span>Расписание</span>
+                        <input type="text" name="schedule" required>
+                    </label>
+                    <button type="submit">Добавить напоминание</button>
+                </form>
+
+                <div class="history-block">
+                    <h3>Текущий список лекарств</h3>
+                    <ul>
+                        {% for medication in medications %}
+                            <li>{{ medication }}</li>
+                        {% else %}
+                            <li>Лекарства для выбранного пользователя отсутствуют.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Клиники и врачи</h2>
+                <form method="get" action="{{ url_for('index') }}" class="inline-form">
+                    <input type="hidden" name="user_id" value="{{ selected_user_id if selected_user_id is not none else '' }}">
+                    <label>
+                        <span>Район</span>
+                        <select name="area">
+                            {% for area in areas %}
+                                <option value="{{ area }}" {% if area == selected_area %}selected{% endif %}>{{ area }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <button type="submit" class="secondary-button">Показать</button>
+                </form>
+
+                <div class="history-columns">
+                    <div>
+                        <h3>Клиники</h3>
+                        <ul>
+                            {% for item in clinics %}
+                                <li>
+                                    <strong>{{ item.clinic.name }}</strong><br>
+                                    {{ item.clinic.address }}<br>
+                                    Врачи:
+                                    {% for doctor in item.doctors %}
+                                        {{ doctor.specialization }}{% if not loop.last %}, {% endif %}
+                                    {% else %}
+                                        нет данных
+                                    {% endfor %}
+                                </li>
+                            {% else %}
+                                <li>Для выбранного района клиники не найдены.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Врачи</h3>
+                        <ul>
+                            {% for doctor in doctors %}
+                                <li>{{ doctor.name }} | {{ doctor.specialization }} | {{ doctor.clinic }}</li>
+                            {% else %}
+                                <li>Для выбранного района врачи не найдены.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Консультация врача</h2>
+                <form method="post" action="{{ url_for('consult_doctor') }}" class="stack-form">
+                    <input type="hidden" name="area" value="{{ selected_area or '' }}">
+                    <label>
+                        <span>Пациент</span>
+                        <select name="user_id" required>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                                    {{ user.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Врач</span>
+                        <select name="doctor_id" required>
+                            {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">{{ doctor.name }} | {{ doctor.specialization }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Вопрос</span>
+                        <textarea name="question" rows="4" required></textarea>
+                    </label>
+                    <button type="submit">Получить консультацию</button>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
