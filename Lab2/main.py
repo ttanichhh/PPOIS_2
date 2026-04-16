@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 
-from Lab2.app.controller.main_controller import MainController
+from app.controller.main_controller import MainController
 
 
 def main() -> int:

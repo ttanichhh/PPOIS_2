@@ -1,7 +1,7 @@
 from typing import List
 from xml.dom import minidom
 
-from Lab2.app.model.entities import ClientRecord
+from app.model.entities import ClientRecord
 
 
 def export_clients_to_xml_dom(records: List[ClientRecord], file_path: str) -> None:

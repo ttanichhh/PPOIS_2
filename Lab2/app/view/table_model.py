@@ -1,7 +1,7 @@
 from typing import List
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 
-from Lab2.app.model.entities import ClientRecord
+from app.model.entities import ClientRecord
 
 
 class ClientsTableModel(QAbstractTableModel):

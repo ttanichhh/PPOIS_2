@@ -3,9 +3,9 @@ from PySide6.QtWidgets import (
     QPushButton, QTableView, QGroupBox, QLabel, QWidget, QFormLayout, QHeaderView
 )
 
-from Lab2.app.model.search import SearchCriteria, CriteriaMode
-from Lab2.app.view.table_model import ClientsTableModel
-from Lab2.app.view.pagination_widget import PaginationWidget
+from app.model.search import SearchCriteria, CriteriaMode
+from app.view.table_model import ClientsTableModel
+from app.view.pagination_widget import PaginationWidget
 
 
 class SearchDialog(QDialog):

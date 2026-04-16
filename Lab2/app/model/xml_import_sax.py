@@ -2,7 +2,7 @@ from typing import List
 import xml.sax
 from xml.sax.handler import ContentHandler
 
-from Lab2.app.model.entities import ClientRecord
+from app.model.entities import ClientRecord
 
 
 class _ClientsHandler(ContentHandler):

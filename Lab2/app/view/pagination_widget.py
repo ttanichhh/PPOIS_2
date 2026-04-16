@@ -45,7 +45,17 @@ class PaginationWidget(QWidget):
         self.btn_last.clicked.connect(self.last_clicked.emit)
         self.page_size.currentTextChanged.connect(lambda t: self.page_size_changed.emit(int(t)))
 
-    def set_info(self, current_page_1based: int, total_pages: int, total_records: int) -> None:
+    def set_info(
+        self,
+        current_page_1based: int,
+        total_pages: int,
+        total_records: int,
+        current_page_records: int | None = None,
+    ) -> None:
         total_pages = max(total_pages, 1)
         current_page_1based = max(1, min(current_page_1based, total_pages))
-        self.page_info.setText(f"стр. {current_page_1based} из {total_pages} • записей {total_records}")
+        shown = total_records if current_page_records is None else current_page_records
+        self.page_info.setText(
+            f"стр. {current_page_1based} из {total_pages} • "
+            f"на странице {shown} • всего {total_records}"
+        )

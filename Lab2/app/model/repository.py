@@ -2,8 +2,8 @@ import sqlite3
 from pathlib import Path
 from typing import List, Tuple
 
-from Lab2.app.model.entities import ClientRecord
-from Lab2.app.model.search import SearchCriteria, CriteriaMode
+from app.model.entities import ClientRecord
+from app.model.search import SearchCriteria, CriteriaMode
 
 
 class ClientRepository:
@@ -16,7 +16,7 @@ class ClientRepository:
         if db_path is None:
             base_dir = Path(__file__).resolve().parents[2]  # .../PPOIS_2/Lab2
             db_path = str(base_dir / "clients.sqlite3")
-        self.db_path = db_path
+        self.db_path = str(Path(db_path))
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
@@ -65,6 +65,47 @@ class ClientRepository:
     def clear_all(self) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM clients")
+
+    def set_database(self, db_path: str) -> None:
+        self.db_path = str(Path(db_path))
+        self._init_db()
+
+    def get_database_path(self) -> str:
+        return self.db_path
+
+    def get_all(self) -> List[ClientRecord]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """SELECT fio, account_number, registration_address, mobile_phone, home_phone
+                   FROM clients
+                   ORDER BY fio, account_number"""
+            ).fetchall()
+        return [ClientRecord(**dict(row)) for row in rows]
+
+    def replace_all(self, records: List[ClientRecord]) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM clients")
+            conn.executemany(
+                """INSERT INTO clients
+                   (fio, account_number, registration_address, mobile_phone, home_phone)
+                   VALUES (?, ?, ?, ?, ?)""",
+                [(r.fio, r.account_number, r.registration_address, r.mobile_phone, r.home_phone) for r in records]
+            )
+
+    def export_to_database(self, target_db_path: str) -> int:
+        records = self.get_all()
+        target_repo = ClientRepository(target_db_path)
+        target_repo.replace_all(records)
+        return len(records)
+
+    def import_from_database(self, source_db_path: str, replace: bool = True) -> int:
+        source_repo = ClientRepository(source_db_path)
+        records = source_repo.get_all()
+        if replace:
+            self.replace_all(records)
+        else:
+            self.add_many(records)
+        return len(records)
 
     # ---------- Paging (all) ----------
     def get_page(self, page_index: int, page_size: int) -> Tuple[List[ClientRecord], int]:

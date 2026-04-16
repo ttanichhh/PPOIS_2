@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import random
+import sqlite3
 from pathlib import Path
 from typing import List
 from xml.dom import minidom
 
 # ====== Настройки ======
 OUTPUT_DIR = Path(__file__).resolve().parents[1] / "demo_xml"   # Lab2/demo_xml
+OUTPUT_DB_DIR = Path(__file__).resolve().parents[1] / "demo_db"  # Lab2/demo_db
 FILES = [
     ("clients_demo_1.xml", 60),
     ("clients_demo_2.xml", 60),
@@ -132,15 +134,59 @@ def export_xml(records: List[dict], file_path: Path) -> None:
     file_path.write_bytes(xml_bytes)
 
 
+def export_sqlite(records: List[dict], file_path: Path) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    if file_path.exists():
+        file_path.unlink()
+
+    conn = sqlite3.connect(file_path)
+    try:
+        conn.execute("""
+            CREATE TABLE clients (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fio TEXT NOT NULL,
+                account_number TEXT NOT NULL,
+                registration_address TEXT NOT NULL,
+                mobile_phone TEXT NOT NULL,
+                home_phone TEXT NOT NULL
+            )
+        """)
+        conn.executemany(
+            """INSERT INTO clients
+               (fio, account_number, registration_address, mobile_phone, home_phone)
+               VALUES (?, ?, ?, ?, ?)""",
+            [
+                (
+                    r["fio"],
+                    r["account_number"],
+                    r["registration_address"],
+                    r["mobile_phone"],
+                    r["home_phone"],
+                )
+                for r in records
+            ]
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def main() -> None:
     rng = random.Random(SEED)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DB_DIR.mkdir(parents=True, exist_ok=True)
 
     for filename, n in FILES:
         records = generate_records(n, rng)
-        path = OUTPUT_DIR / filename
-        export_xml(records, path)
-        print(f"Generated {n} records -> {path}")
+        xml_path = OUTPUT_DIR / filename
+        export_xml(records, xml_path)
+
+        db_filename = filename.replace(".xml", ".sqlite3")
+        db_path = OUTPUT_DB_DIR / db_filename
+        export_sqlite(records, db_path)
+
+        print(f"Generated {n} records -> {xml_path}")
+        print(f"Generated {n} records -> {db_path}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QVBoxLayout, QLabel
 )
-from Lab2.app.model.entities import ClientRecord
+from app.model.entities import ClientRecord
 
 
 class AddEditDialog(QDialog):

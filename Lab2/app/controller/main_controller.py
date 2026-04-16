@@ -1,14 +1,15 @@
 import math
+from pathlib import Path
 from PySide6.QtWidgets import QFileDialog, QDialog
 
-from Lab2.app.view.main_window import MainWindow
-from Lab2.app.view.dialogs.add_edit_dialog import AddEditDialog
-from Lab2.app.view.dialogs.search_dialog import SearchDialog
-from Lab2.app.view.dialogs.delete_dialog import DeleteDialog
+from app.view.main_window import MainWindow
+from app.view.dialogs.add_edit_dialog import AddEditDialog
+from app.view.dialogs.search_dialog import SearchDialog
+from app.view.dialogs.delete_dialog import DeleteDialog
 
-from Lab2.app.model.repository import ClientRepository
-from Lab2.app.model.xml_export_dom import export_clients_to_xml_dom
-from Lab2.app.model.xml_import_sax import import_clients_from_xml_sax
+from app.model.repository import ClientRepository
+from app.model.xml_export_dom import export_clients_to_xml_dom
+from app.model.xml_import_sax import import_clients_from_xml_sax
 
 
 class MainController:
@@ -34,6 +35,10 @@ class MainController:
         v.act_new.triggered.connect(self.on_new_clear_db)
         v.act_save.triggered.connect(self.on_export_xml)
         v.act_open.triggered.connect(self.on_import_xml)
+        v.act_open_db.triggered.connect(self.on_open_database)
+        v.act_save_db.triggered.connect(self.on_save_database_as)
+        v.act_table_view.triggered.connect(self.on_table_view)
+        v.act_tree_view.triggered.connect(self.on_tree_view)
 
         v.pagination.first_clicked.connect(self.on_first)
         v.pagination.prev_clicked.connect(self.on_prev)
@@ -41,6 +46,7 @@ class MainController:
         v.pagination.last_clicked.connect(self.on_last)
         v.pagination.page_size_changed.connect(self.on_page_size_changed)
 
+        self.view.set_database_label(self.repo.get_database_path())
         self.reload_page()
 
     def show(self):
@@ -61,7 +67,13 @@ class MainController:
         rows, total = self.repo.get_page(self.page_index, self.page_size)
         self.total_records = total
         self.view.model.set_rows(rows)
-        self.view.pagination.set_info(self.page_index + 1, self.total_pages(), self.total_records)
+        self.view.set_tree_rows(rows)
+        self.view.pagination.set_info(
+            self.page_index + 1,
+            self.total_pages(),
+            self.total_records,
+            len(rows),
+        )
 
     def on_first(self):
         self.page_index = 0
@@ -83,6 +95,12 @@ class MainController:
         self.page_size = max(1, int(n))
         self.page_index = 0
         self.reload_page()
+
+    def on_table_view(self):
+        self.view.set_table_mode()
+
+    def on_tree_view(self):
+        self.view.set_tree_mode()
 
     # -------- Actions --------
     def on_add(self):
@@ -119,7 +137,7 @@ class MainController:
             state["page_index"] = max(0, min(state["page_index"], total_pages - 1))
 
             dlg.table_model.set_rows(rows)
-            dlg.pagination.set_info(state["page_index"] + 1, total_pages, total)
+            dlg.pagination.set_info(state["page_index"] + 1, total_pages, total, len(rows))
 
         def tp():
             if state["total"] <= 0:
@@ -130,7 +148,7 @@ class MainController:
         dlg.btn_clear.clicked.connect(lambda: (
             state.__setitem__("page_index", 0),
             dlg.table_model.set_rows([]),
-            dlg.pagination.set_info(1, 1, 0)
+            dlg.pagination.set_info(1, 1, 0, 0)
         ))
 
         dlg.pagination.first_clicked.connect(lambda: (state.__setitem__("page_index", 0), load_search()))
@@ -157,7 +175,7 @@ class MainController:
             deleted_records = self.repo.delete_by_criteria(dlg.get_criteria())
 
             if deleted_records:
-                text = "Удалены записи:\n\n"
+                text = f"Удалено записей: {len(deleted_records)}\n\n"
                 for r in deleted_records[:10]:
                     text += f"{r.fio} | {r.account_number}\n"
                 if len(deleted_records) > 10:
@@ -218,9 +236,45 @@ class MainController:
             if not records:
                 self.view.show_info("В файле нет записей.")
                 return
-            self.repo.add_many(records)
+            self.repo.replace_all(records)
             self.page_index = 0
             self.reload_page()
-            self.view.show_info(f"Загружено и добавлено записей: {len(records)}")
+            self.view.show_info(f"Загружено записей из XML: {len(records)}")
         except Exception as e:
             self.view.show_error(f"Не удалось загрузить XML:\n{e}")
+
+    def on_open_database(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self.view,
+            "Открыть базу данных",
+            self.repo.get_database_path(),
+            "SQLite database (*.sqlite3 *.db);;All files (*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            self.repo.set_database(file_path)
+            self.page_index = 0
+            self.view.set_database_label(self.repo.get_database_path())
+            self.reload_page()
+            self.view.show_info("База данных открыта.")
+        except Exception as e:
+            self.view.show_error(f"Не удалось открыть базу данных:\n{e}")
+
+    def on_save_database_as(self):
+        default_name = Path(self.repo.get_database_path()).name or "clients.sqlite3"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self.view,
+            "Сохранить базу данных как",
+            default_name,
+            "SQLite database (*.sqlite3 *.db)"
+        )
+        if not file_path:
+            return
+
+        try:
+            count = self.repo.export_to_database(file_path)
+            self.view.show_info(f"В базу данных сохранено записей: {count}")
+        except Exception as e:
+            self.view.show_error(f"Не удалось сохранить базу данных:\n{e}")

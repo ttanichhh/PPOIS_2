@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QPushButton, QGroupBox, QLabel, QWidget, QFormLayout
 )
 
-from Lab2.app.model.search import SearchCriteria, CriteriaMode
+from app.model.search import SearchCriteria, CriteriaMode
 
 
 class DeleteDialog(QDialog):
