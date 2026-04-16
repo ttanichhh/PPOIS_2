@@ -1,11 +1,15 @@
-from Lab1.exceptions import InvalidDataFormatError
-from Lab1.entities.person import Person
+from __future__ import annotations
+
+from entities.medical import MedicalHistory
+from entities.person import Person
+from exceptions import InvalidDataFormatError
+
 
 class Patient(Person):
     def __init__(self, person_id: int, name: str, phone: str, age: int) -> None:
         super().__init__(person_id, name, phone)
-        self._age: int = age
-        self._medical_history = None
+        self.age = age
+        self._medical_history: MedicalHistory | None = None
 
     @property
     def age(self) -> int:
@@ -18,11 +22,13 @@ class Patient(Person):
         self._age = value
 
     @property
-    def medical_history(self):
+    def medical_history(self) -> MedicalHistory:
+        if self._medical_history is None:
+            self._medical_history = MedicalHistory()
         return self._medical_history
 
     @medical_history.setter
-    def medical_history(self, value) -> None:
+    def medical_history(self, value: MedicalHistory) -> None:
         self._medical_history = value
 
     def __str__(self) -> str:

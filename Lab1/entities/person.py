@@ -1,14 +1,12 @@
-from Lab1.exceptions import EmptyValueError
+from exceptions import EmptyValueError
+
 
 class Person:
     def __init__(self, person_id: int, name: str, phone: str) -> None:
-        self._id: int = person_id
-        self._name: str = name
-        self._phone: str = phone
+        self._id = person_id
+        self.name = name
+        self.phone = phone
 
-    # @property - это декоратор, который позволяет определять методы
-    # которые можно использовать как атрибуты
-    # Это реализация принципа инкапсуляции в ООП
     @property
     def id(self) -> int:
         return self._id
@@ -19,9 +17,9 @@ class Person:
 
     @name.setter
     def name(self, value: str) -> None:
-        if not value:
+        if not value.strip():
             raise EmptyValueError("Имя не может быть пустым")
-        self._name = value
+        self._name = value.strip()
 
     @property
     def phone(self) -> str:
@@ -29,9 +27,9 @@ class Person:
 
     @phone.setter
     def phone(self, value: str) -> None:
-        if not value:
+        if not value.strip():
             raise EmptyValueError("Номер не может быть пустым")
-        self._phone = value
+        self._phone = value.strip()
 
     def __str__(self) -> str:
         return f"{self._name} (ID: {self._id}, тел: {self._phone})"

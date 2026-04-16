@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import List
-from Lab1.exceptions import InvalidDataFormatError
+
+from exceptions import EmptyValueError, InvalidDataFormatError
 
 
 class Symptom:
-    def __init__(self, name: str, severity: int = 5, date: str = None) -> None:
-        self._name: str = name
-        if not 1 <= severity <= 10:
-            raise InvalidDataFormatError("Тяжесть должна быть от 1 до 10")
-        self._severity: int = severity
-        if date:
-            self._date: str = date
-        else:
-            self._date: str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    def __init__(self, name: str, severity: int = 5, date: str | None = None) -> None:
+        if not name.strip():
+            raise EmptyValueError("Название симптома не может быть пустым")
+        self._name = name.strip()
+        self.severity = severity
+        self._date = date or datetime.now().strftime("%Y-%m-%d %H:%M")
 
     @property
     def name(self) -> str:
@@ -32,19 +31,22 @@ class Symptom:
     def date(self) -> str:
         return self._date
 
-    @date.setter
-    def date(self, value: str) -> None:
-        self._date = value
-
     def __str__(self) -> str:
         return f"Симптом: {self._name} | Тяжесть: {self._severity}/10 | {self._date}"
 
 
 class Medication:
     def __init__(self, name: str, dosage: str, schedule: str) -> None:
-        self._name: str = name
-        self._dosage: str = dosage
-        self._schedule: str = schedule
+        if not name.strip():
+            raise EmptyValueError("Название лекарства не может быть пустым")
+        if not dosage.strip():
+            raise EmptyValueError("Дозировка не может быть пустой")
+        if not schedule.strip():
+            raise EmptyValueError("Расписание не может быть пустым")
+
+        self._name = name.strip()
+        self._dosage = dosage.strip()
+        self._schedule = schedule.strip()
 
     @property
     def name(self) -> str:
@@ -63,13 +65,17 @@ class Medication:
 
 
 class Recommendation:
-    def __init__(self, text: str, source: str = "Ассистент", date: str = None) -> None:
-        self._text: str = text
-        self._source: str = source
-        if date:
-            self._date: str = date
-        else:
-            self._date: str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    def __init__(
+        self,
+        text: str,
+        source: str = "Ассистент",
+        date: str | None = None,
+    ) -> None:
+        if not text.strip():
+            raise EmptyValueError("Текст рекомендации не может быть пустым")
+        self._text = text.strip()
+        self._source = source.strip() or "Ассистент"
+        self._date = date or datetime.now().strftime("%Y-%m-%d %H:%M")
 
     @property
     def text(self) -> str:
@@ -89,20 +95,20 @@ class Recommendation:
 
 class MedicalHistory:
     def __init__(self) -> None:
-        self._symptoms: List[Symptom] = []
-        self._medications: List[Medication] = []
-        self._recommendations: List[Recommendation] = []
+        self._symptoms: list[Symptom] = []
+        self._medications: list[Medication] = []
+        self._recommendations: list[Recommendation] = []
 
     @property
-    def symptoms(self) -> List[Symptom]:
+    def symptoms(self) -> list[Symptom]:
         return self._symptoms
 
     @property
-    def medications(self) -> List[Medication]:
+    def medications(self) -> list[Medication]:
         return self._medications
 
     @property
-    def recommendations(self) -> List[Recommendation]:
+    def recommendations(self) -> list[Recommendation]:
         return self._recommendations
 
     def add_symptom(self, symptom: Symptom) -> None:
@@ -115,5 +121,8 @@ class MedicalHistory:
         self._recommendations.append(recommendation)
 
     def __str__(self) -> str:
-        return (f"Медицинская история: {len(self._symptoms)} симптомов, "
-                f"{len(self._medications)} лекарств, {len(self._recommendations)} советов")
+        return (
+            f"Медицинская история: {len(self._symptoms)} симптомов, "
+            f"{len(self._medications)} лекарств, "
+            f"{len(self._recommendations)} рекомендаций"
+        )

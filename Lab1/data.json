@@ -324,5 +324,9 @@
       "medications": [],
       "recommendations": []
     }
-  ]
+  ],
+  "system_state": {
+    "status": "READY",
+    "last_action": "Система готова к работе"
+  }
 }

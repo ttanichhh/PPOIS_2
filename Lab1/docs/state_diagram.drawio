@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="medical-assistant-state-clean" name="State Diagram">
+    <mxGraphModel dx="3346" dy="1116" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Начало" vertex="1">
+          <mxGeometry height="50" width="120" x="80" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="startup" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Запуск" vertex="1">
+          <mxGeometry height="60" width="150" x="-70" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ready" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Ожидание команды" vertex="1">
+          <mxGeometry height="60" width="170" x="-80" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="users" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Управление&#xa;пользователями" vertex="1">
+          <mxGeometry height="70" width="190" x="500" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="symptoms" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Запись&#xa;симптомов" vertex="1">
+          <mxGeometry height="70" width="190" x="460" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="advice" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Предоставление&#xa;рекомендаций" vertex="1">
+          <mxGeometry height="70" width="190" x="470" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="medications" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Управление&#xa;лекарствами" vertex="1">
+          <mxGeometry height="70" width="190" x="637" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="clinics" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Поиск клиник" vertex="1">
+          <mxGeometry height="60" width="190" x="637" y="525" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Консультация&#xa;с врачом" vertex="1">
+          <mxGeometry height="70" width="190" x="637" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="saving" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Сохранение&#xa;состояния" vertex="1">
+          <mxGeometry height="70" width="190" x="637" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="error" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Ошибка" vertex="1">
+          <mxGeometry height="60" width="130" x="880" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="finish" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Конец" vertex="1">
+          <mxGeometry height="50" width="120" x="455" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="startup" value="инициализация">
+          <mxGeometry relative="1" x="-0.3333" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="startup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="система готова">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="users" value="регистрация пользователя">
+          <mxGeometry relative="1" x="-0.12" y="5" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="300" y="115" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="пользователь создан">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="запись симптома">
+          <mxGeometry relative="1" x="-0.1141" y="50" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="235" y="330" />
+              <mxPoint x="235" y="180" />
+            </Array>
+            <mxPoint x="160.0000000000001" y="330" as="sourcePoint" />
+            <mxPoint x="405" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="симптом сохранен">
+          <mxGeometry relative="1" x="-0.0233" y="50" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="330" y="160" />
+              <mxPoint x="330" y="345" />
+            </Array>
+            <mxPoint x="460" y="160" as="sourcePoint" />
+            <mxPoint x="215.0000000000001" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="advice" value="запрос совета">
+          <mxGeometry relative="1" x="0.3571" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="300" y="315" />
+              <mxPoint x="300" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="advice" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="рекомендация выдана">
+          <mxGeometry relative="1" x="-0.5172" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="340" y="320" />
+              <mxPoint x="340" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="medications" value="добавление лекарства">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="415" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="medications" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="напоминание добавлено">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="465" />
+              <mxPoint x="400" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="clinics" value="поиск клиники">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="clinics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="поиск завершен">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="555" />
+              <mxPoint x="450" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="doctor" value="консультация">
+          <mxGeometry relative="1" x="0.0097" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="300" y="615" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="doctor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="ответ получен">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="635" />
+              <mxPoint x="500" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="saving" value="сохранить и выйти">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="735" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="saving" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="finish" value="данные сохранены">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="startup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка запуска">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="150" />
+              <mxPoint x="700" y="150" />
+              <mxPoint x="700" y="370" />
+              <mxPoint x="945" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="symptoms" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="advice" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="medications" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e22" edge="1" parent="1" source="clinics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" edge="1" parent="1" source="doctor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e24" edge="1" parent="1" source="saving" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="error" value="ошибка сохранения">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e25" edge="1" parent="1" source="error" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ready" value="обработка ошибки">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="840" />
+              <mxPoint x="155" y="840" />
+              <mxPoint x="155" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="N9MFjVzLjmSl2qjvCoRy-1" edge="1" parent="1" source="finish" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="finish">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

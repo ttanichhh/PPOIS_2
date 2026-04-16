@@ -1,138 +1,205 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import List, Dict, Tuple
-from Lab1.entities.doctor import Doctor
-from Lab1.entities.patient import Patient
-from Lab1.entities.medical import Symptom, Medication, Recommendation, MedicalHistory
+from abc import ABC, abstractmethod
+from typing import Any
+
+from entities.doctor import Doctor
+from entities.medical import MedicalHistory, Medication, Recommendation, Symptom
+from entities.patient import Patient
 
 
-class DataStorage:
-    @staticmethod
-    def save_data(filename: str, users: List[Patient]) -> None:
-        # Сохраняем только пользователей (врачи/клиники/симптомы неизменны)
-        data = {
-            "users": [
-                {
-                    "id": u.id,
-                    "name": u.name,
-                    "phone": u.phone,
-                    "age": u.age,
-                    "symptoms": [
-                        {
-                            "name": s.name,
-                            "severity": s.severity,
-                            "date": s.date
-                        }
-                        for s in u.medical_history.symptoms
-                    ],
-                    "medications": [
-                        {
-                            "name": m.name,
-                            "dosage": m.dosage,
-                            "schedule": m.schedule
-                        }
-                        for m in u.medical_history.medications
-                    ],
-                    "recommendations": [
-                        {
-                            "text": r.text,
-                            "source": r.source,
-                            "date": r.date
-                        }
-                        for r in u.medical_history.recommendations
-                    ]
-                }
-                for u in users
-            ]
-        }
+class StorageProtocol(ABC):
+    @abstractmethod
+    def load(self) -> dict[str, Any]:
+        raise NotImplementedError
 
-        # Загружаем существующий файл, чтобы сохранить клиники, врачей и симптомы
-        if os.path.exists(filename):
-            with open(filename, 'r', encoding='utf-8') as f:
-                full_data = json.load(f)
-            full_data["users"] = data["users"]
-        else:
-            # Если файла нет, создаем структуру с базовыми данными
-            full_data = {
-                "clinics": [],
-                "doctors": [],
-                "symptoms": [],
-                "users": data["users"]
-            }
+    @abstractmethod
+    def save(
+        self,
+        users: list[Patient],
+        doctors: list[Doctor],
+        clinics: list[dict[str, Any]],
+        system_state: dict[str, str],
+    ) -> None:
+        raise NotImplementedError
 
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(full_data, f, ensure_ascii=False, indent=2)
 
-    @staticmethod
-    def load_data(filename: str) -> Tuple[List[Patient], List[Doctor], List[Dict], Dict]:
-        if not os.path.exists(filename):
-            return [], [], [], {"symptom_map": {}, "advice_map": {}, "symptom_list": []}
+class JsonStorage(StorageProtocol):
+    def __init__(self, filename: str) -> None:
+        self._filename = filename
 
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+    def load(self) -> dict[str, Any]:
+        if not os.path.exists(self._filename):
+            return self._empty_dataset()
 
-        # Загружаем клиники как словари
+        with open(self._filename, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
         clinics = data.get("clinics", [])
         clinic_name_by_id = {
-            c["id"]: c["name"]
-            for c in clinics
-            if "id" in c and "name" in c
+            clinic["id"]: clinic["name"]
+            for clinic in clinics
+            if "id" in clinic and "name" in clinic
+        }
+        doctors = self._load_doctors(data, clinic_name_by_id)
+        users = self._load_users(data)
+        symptom_advice = {
+            item["name"].strip().lower(): item["advice"]
+            for item in data.get("symptoms", [])
+            if item.get("name") and item.get("advice")
         }
 
-        # Загружаем врачей
-        doctors = []
-        for d in data.get("doctors", []):
-            clinic_id = d.get("clinic_id")
+        return {
+            "users": users,
+            "doctors": doctors,
+            "clinics": clinics,
+            "symptom_advice": symptom_advice,
+            "system_state": data.get("system_state", {}),
+        }
+
+    def save(
+        self,
+        users: list[Patient],
+        doctors: list[Doctor],
+        clinics: list[dict[str, Any]],
+        system_state: dict[str, str],
+    ) -> None:
+        full_data = self._read_raw_data()
+        full_data["users"] = [self._serialize_user(user) for user in users]
+        full_data["doctors"] = [
+            {
+                "id": doctor.id,
+                "name": doctor.name,
+                "phone": doctor.phone,
+                "specialization": doctor.specialization,
+                "clinic_id": self._get_clinic_id(clinics, doctor.clinic),
+            }
+            for doctor in doctors
+        ]
+        full_data["clinics"] = clinics
+        full_data["system_state"] = system_state
+
+        with open(self._filename, "w", encoding="utf-8") as file:
+            json.dump(full_data, file, ensure_ascii=False, indent=2)
+
+    def _read_raw_data(self) -> dict[str, Any]:
+        if not os.path.exists(self._filename):
+            return {
+                "users": [],
+                "doctors": [],
+                "clinics": [],
+                "symptoms": [],
+                "system_state": {},
+            }
+        with open(self._filename, "r", encoding="utf-8") as file:
+            return json.load(file)
+
+    def _load_doctors(
+        self,
+        data: dict[str, Any],
+        clinic_name_by_id: dict[int, str],
+    ) -> list[Doctor]:
+        doctors: list[Doctor] = []
+        for item in data.get("doctors", []):
+            clinic_id = item.get("clinic_id")
             clinic_name = clinic_name_by_id.get(clinic_id, f"Клиника #{clinic_id}")
-
-            doctor = Doctor(
-                d["id"],
-                d["name"],
-                d["phone"],
-                d["specialization"],
-                clinic_name  # <-- теперь doctor.clinic = ИМЯ клиники
+            doctors.append(
+                Doctor(
+                    item["id"],
+                    item["name"],
+                    item["phone"],
+                    item["specialization"],
+                    clinic_name,
+                ),
             )
-            doctors.append(doctor)
+        return doctors
 
-        # Загружаем симптомы
-        symptoms_data = data.get("symptoms", [])
-        symptom_map = {}
-        advice_map = {}
-        for s in symptoms_data:
-            symptom_map[s["name"]] = s["specialization"]
-            advice_map[s["name"]] = s["advice"]
-
-        # Загружаем пользователей
-        users = []
-        for u in data.get("users", []):
-            user = Patient(
-                u["id"],
-                u["name"],
-                u["phone"],
-                u["age"]
+    def _load_users(self, data: dict[str, Any]) -> list[Patient]:
+        users: list[Patient] = []
+        for item in data.get("users", []):
+            patient = Patient(
+                item["id"],
+                item["name"],
+                item["phone"],
+                item["age"],
             )
-
             medical_history = MedicalHistory()
 
-            for s in u.get("symptoms", []):
-                symptom = Symptom(s["name"], s["severity"])
-                symptom._date = s["date"]
+            for symptom_data in item.get("symptoms", []):
+                symptom = Symptom(
+                    symptom_data["name"],
+                    symptom_data["severity"],
+                    symptom_data["date"],
+                )
                 medical_history.add_symptom(symptom)
 
-            for m in u.get("medications", []):
-                medication = Medication(m["name"], m["dosage"], m["schedule"])
-                medical_history.add_medication(medication)
+            for medication_data in item.get("medications", []):
+                medical_history.add_medication(
+                    Medication(
+                        medication_data["name"],
+                        medication_data["dosage"],
+                        medication_data["schedule"],
+                    ),
+                )
 
-            for r in u.get("recommendations", []):
-                recommendation = Recommendation(r["text"], r["source"])
-                recommendation._date = r["date"]
-                medical_history.add_recommendation(recommendation)
+            for recommendation_data in item.get("recommendations", []):
+                medical_history.add_recommendation(
+                    Recommendation(
+                        recommendation_data["text"],
+                        recommendation_data["source"],
+                        recommendation_data["date"],
+                    ),
+                )
 
-            user.medical_history = medical_history
-            users.append(user)
+            patient.medical_history = medical_history
+            users.append(patient)
+        return users
 
-        return users, doctors, clinics, {  # 4 элемента
-            "symptom_map": symptom_map,
-            "advice_map": advice_map,
-            "symptom_list": list(symptom_map.keys())
+    def _serialize_user(self, user: Patient) -> dict[str, Any]:
+        return {
+            "id": user.id,
+            "name": user.name,
+            "phone": user.phone,
+            "age": user.age,
+            "symptoms": [
+                {
+                    "name": symptom.name,
+                    "severity": symptom.severity,
+                    "date": symptom.date,
+                }
+                for symptom in user.medical_history.symptoms
+            ],
+            "medications": [
+                {
+                    "name": medication.name,
+                    "dosage": medication.dosage,
+                    "schedule": medication.schedule,
+                }
+                for medication in user.medical_history.medications
+            ],
+            "recommendations": [
+                {
+                    "text": recommendation.text,
+                    "source": recommendation.source,
+                    "date": recommendation.date,
+                }
+                for recommendation in user.medical_history.recommendations
+            ],
+        }
+
+    def _get_clinic_id(self, clinics: list[dict[str, Any]], clinic_name: str) -> int | None:
+        for clinic in clinics:
+            if clinic.get("name") == clinic_name:
+                return clinic.get("id")
+        return None
+
+    def _empty_dataset(self) -> dict[str, Any]:
+        return {
+            "users": [],
+            "doctors": [],
+            "clinics": [],
+            "symptom_advice": {},
+            "system_state": {},
         }
