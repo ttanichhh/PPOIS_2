@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-
 from flask import Flask, flash, redirect, render_template, request, url_for
 
 from app.application import MedicalAssistantApp
@@ -17,7 +16,7 @@ def create_web_app(app_service: MedicalAssistantApp) -> Flask:
         areas = app_service.get_areas()
         user_ids = {user["id"] for user in users}
 
-        selected_user_id = request.args.get("user_id", type=int)
+        selected_user_id = request.args.get("user_id", type=int) #request позволяет получить данные запроса.
         if selected_user_id not in user_ids and users:
             selected_user_id = users[0]["id"]
 
